@@ -34,86 +34,148 @@ public class Whitelist implements Listener {
 
     final String invalid_args_msg = ChatColor.RED + "Invalid arguments!";
     void whitelistcmd(CommandSender sender, Command cmd, String label, String[] args) {
-        final int num_args = args.length;
-        if (num_args == 0) {
+        if (args == null || args.length == 0) {
             sender.sendMessage(invalid_args_msg);
             return;
         }
 
-        if (lists.contains(args[0]) && (num_args == 2)) {
-            switch (args[1]) {
+        String action = args[0].toLowerCase();
+
+        switch (action) {
             case "add":
-                // add the list
-                sender.sendMessage(add_list(args[0]));
+                // usage: /whitelist add <group>
+                if (args.length != 2) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /whitelist add <group>");
+                    return;
+                }
+                String group = args[1].toLowerCase();
+                if (!lists.contains(group)) {
+                    sender.sendMessage(ChatColor.RED + "That group does not exist");
+                    return;
+                }
+                sender.sendMessage(add_list(group));
                 break;
+
             case "remove":
-                // remove the list
-                sender.sendMessage(rem_list(args[0]));
+                // usage: /whitelist remove <group>
+                if (args.length != 2) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /whitelist remove <group>");
+                    return;
+                }
+                sender.sendMessage(rem_list(args[1].toLowerCase()));
                 break;
-            case "list":
-                // list player names on specified list
+
+            case "list": {
+                // /whitelist list -> show active and  available groups
+                // /whitelist list <group> -> show UUIDs in group file
+                if (args.length == 1) {
+                    String s = active_lists.size() + " group(s) active: ";
+                    for (String name : active_lists) {
+                        s += name + ", ";
+                    }
+                    sender.sendMessage(s);
+
+                    s = lists.size() + " group(s) available: ";
+                    for (String name : lists) {
+                        s += name + ", ";
+                    }
+                    sender.sendMessage(s);
+                    return;
+                } else {
+                    final String gr = args[1].toLowerCase();
+                    if (!lists.contains(gr)) {
+                        sender.sendMessage(ChatColor.RED + "That group does not exist.");
+                        return;
+                    }
+                    File file = new File(this.plugin.getDataFolder(), gr + ".txt");
+                    if (!file.exists()) {
+                        sender.sendMessage(ChatColor.RED + "No file for group " + gr + " found.");
+                        return;
+                    }
+                    String str = "Contents of " + gr + ": ";
+                    try (Scanner scanner = new Scanner(file)) {
+                        boolean any = false;
+                        while (scanner.hasNextLine()) {
+                            String line = scanner.nextLine().trim();
+                            if (line.isEmpty()) continue;
+                            if (any) str += ", ";
+                            str += line;
+                            any = true;
+                        }
+                        if (!any) str += "[empty]";
+                        sender.sendMessage(str);
+                    } catch (FileNotFoundException e) {
+                        sender.sendMessage(ChatColor.RED + "Failed to read group file: " + e.getMessage());
+                    }
+                    return;
+                }
+            }
+
+            case "tempplayer":
+                // /whitelist tempplayer -list
+                // /whitelist tempplayer <name>
+                if (args.length != 2) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /whitelist tempplayer <name| -list>");
+                    return;
+                }
+                String param = args[1];
+                if (param.equalsIgnoreCase("-list")) {
+                    if (temp_player_names.isEmpty()) {
+                        sender.sendMessage("Temp players: (none)");
+                        return;
+                    }
+                    String s = "Temp players: ";
+                    for (String player_name : temp_player_names) {
+                        s += player_name + ", ";
+                    }
+                    sender.sendMessage(s);
+                    return;
+                }
+
+                String name = param.toLowerCase(); // normalize to lowercase
+                if (temp_player_names.contains(name)) {
+                    temp_player_names.remove(name);
+                    sender.sendMessage(ChatColor.GREEN + param + " removed from temp whitelist.");
+                } else {
+                    temp_player_names.add(name);
+                    sender.sendMessage(ChatColor.GREEN + param + " added to temp whitelist.");
+                }
+                break;
+
+            case "on":
+                if (enforce_whitelist) {
+                    sender.sendMessage(ChatColor.RED + "Whitelist is already on");
+                } else {
+                    enforce_whitelist = true;
+                    sender.sendMessage(ChatColor.GREEN + "Whitelist is now on");
+                }
+                break;
+
+            case "off":
+                if (!enforce_whitelist) {
+                    sender.sendMessage(ChatColor.RED + "Whitelist is already off");
+                } else {
+                    enforce_whitelist = false;
+                    sender.sendMessage(ChatColor.GREEN + "Whitelist is now off");
+                }
+                break;
+
+            case "help":
+                sender.sendMessage(ChatColor.AQUA + "Whitelist commands:");
+                sender.sendMessage("/whitelist list");
+                sender.sendMessage("/whitelist list <group>");
+                sender.sendMessage("/whitelist add <group>");
+                sender.sendMessage("/whitelist remove <group>");
+                sender.sendMessage("/whitelist tempplayer <name>");
+                sender.sendMessage("/whitelist on|off");
+                break;
+
             default:
                 sender.sendMessage(invalid_args_msg);
-                break;
-            }
-        } else if (args[0].equalsIgnoreCase("list") && num_args == 1) {
-            StringBuilder temp = new StringBuilder();
-            temp.append(active_lists.size() + " group(s) active: ");
-            for (int i = 0; i < active_lists.size(); i++) {
-                temp.append(active_lists.get(i) + ", ");
-            }
-            sender.sendMessage(temp.toString());
-
-            temp.delete(0,temp.length());
-            temp.append(lists.size() + " group(s) available: ");
-            for (int i = 0; i < lists.size(); i++) {
-                temp.append(lists.get(i) + ", ");
-            }
-            sender.sendMessage(temp.toString());
-
-        } else if (args[0].equalsIgnoreCase("tempplayer") && num_args == 2) {
-            // usage: /whitelist tempplayer <name>
-            //add_temp(args[1]);
-            if (args[1].equalsIgnoreCase("-list")) {
-                String s = "";
-                for (String name : temp_player_names) {
-                    s += name + ", ";
-                }
-                sender.sendMessage("Temp players: " + s);
                 return;
-            }
-
-//            sender.sendMessage(ChatColor.AQUA + "This feature is currently WIP. Use /whitelist off for now and turn it back on when done.");
-            if (temp_player_names.contains(args[1])) {
-                sender.sendMessage(args[1] + " removed from temp whitelist.");
-                temp_player_names.remove(args[1]);
-                return;
-            }
-            temp_player_names.add(args[1]);
-            sender.sendMessage(args[1] + " added to temp whitelist.");
-
-        } else if (args[0].equals("on")) {
-            // enforce the whitelist
-            if (enforce_whitelist) {
-                sender.sendMessage(ChatColor.GREEN + "Whitelist is already on!");
-                return;
-            }
-            sender.sendMessage(ChatColor.GREEN + "Whitelist is now on!");
-            enforce_whitelist = true;
-
-        } else if (args[0].equals("off")) {
-            // disable the whitelist
-            if (!enforce_whitelist) {
-                sender.sendMessage(ChatColor.GREEN + "Whitelist is already off!");
-                return;
-            }
-            sender.sendMessage(ChatColor.GREEN + "Whitelist is now off.");
-            enforce_whitelist = false;
-
-        } else {
-            sender.sendMessage("Invalid arguments!");
         }
     }
+
 
     /**
      * @param list list of players to add
@@ -138,11 +200,11 @@ public class Whitelist implements Listener {
      * @return status message to player
      */
     private String rem_list(String list) {
-        if (list.equals("admin") || list.equals("temp")) {
-            return ChatColor.RED + "This is a protected group & cannot be removed!";
+        if (list.equals("admin")) {
+            return ChatColor.RED + "admin is a protected group & cannot be removed!";
         }
 
-        if (!active_lists.contains(list) || list == null) {
+        if (list == null || !active_lists.contains(list)) {
             return ChatColor.RED + "This list does not exist or is inactive.";
         }
 
@@ -159,27 +221,27 @@ public class Whitelist implements Listener {
      * This player won't be able to log back in after the server restarts
      * @param temp_player
      */
-    ArrayList<PlayerID> temp_players = new ArrayList<>();
+//    ArrayList<PlayerID> temp_players = new ArrayList<>();
     ArrayList<String> temp_player_names = new ArrayList<>();
-    private String add_temp(String temp_player_name) {
-        try {
-            // Create the connection
-            HttpURLConnection connection = (HttpURLConnection) new URL("https://api.mojang.com/users/profiles/minecraft/" + temp_player_name).openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("Accept", "application/json");
-
-            if (connection.getResponseCode() != 200) return "API Error: Player does not exist.";
-
-            try (Reader reader = new InputStreamReader(connection.getInputStream())) {
-                PlayerID data = new Gson().fromJson(reader, PlayerID.class);
-                temp_players.add(data);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return ChatColor.GREEN + "Added " + temp_player_name + " to temp whitelist.";
-    }
+//    private String add_temp(String temp_player_name) {
+//        try {
+//            // Create the connection
+//            HttpURLConnection connection = (HttpURLConnection) new URL("https://api.mojang.com/users/profiles/minecraft/" + temp_player_name).openConnection();
+//            connection.setRequestMethod("GET");
+//            connection.setRequestProperty("Accept", "application/json");
+//
+//            if (connection.getResponseCode() != 200) return "API Error: Player does not exist.";
+//
+//            try (Reader reader = new InputStreamReader(connection.getInputStream())) {
+//                PlayerID data = new Gson().fromJson(reader, PlayerID.class);
+//                temp_players.add(data);
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        return ChatColor.GREEN + "Added " + temp_player_name + " to temp whitelist.";
+//    }
 
 
     /**
@@ -195,7 +257,7 @@ public class Whitelist implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        if (temp_player_names.contains(player.getName())) {
+        if (temp_player_names.contains(player.getName().toLowerCase())) {
             Bukkit.getLogger().info(player.getName() + " is tempplayer.");
             return;
         }
@@ -220,10 +282,14 @@ public class Whitelist implements Listener {
         event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "Bigrat couldn't find you on the whitelist!\n\n\nContact an admin if you believe this to be an error!");
     }
 
-    String[] base = {"admin"};
-    List<String> lists = Arrays.asList(base);
+    List<String> lists = new ArrayList<>();
     ArrayList<String> active_lists = new ArrayList<>();
+
     private void configure() {
+        lists.clear();
+        lists.addAll(config_file.getStringList("whitelist.groups"));
+
+        if (!lists.contains("admin")) lists.add("admin");
 
         for (String group : lists) {
             File group_file = new File(this.plugin.getDataFolder(), group + ".txt");
@@ -237,8 +303,6 @@ public class Whitelist implements Listener {
             }
         }
         active_lists.clear();
-        active_lists.addAll(config_file.getStringList("whitelist.groups"));
-
         // the admin list is always added
         active_lists.add("admin");
 
