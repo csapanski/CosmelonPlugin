@@ -1,6 +1,7 @@
 package me.cosmelon.cosmelonplugin;
 
 
+import java.util.ArrayList;
 import java.util.UUID;
 import mc.obliviate.inventory.InventoryAPI;
 import me.cosmelon.cosmelonplugin.listeners.CompassClickListener;
@@ -9,6 +10,7 @@ import me.cosmelon.cosmelonplugin.listeners.OnInteractAtEntity;
 import me.cosmelon.cosmelonplugin.listeners.PlayerChatListener;
 import me.cosmelon.cosmelonplugin.listeners.ResourceDenyListener;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -42,8 +44,8 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         startPlayerCountTask();
         new InventoryAPI(this).init();
 
-        whitelist = new Whitelist(this);
         manager = new DataManager(this);
+        whitelist = new Whitelist(this);
         //webHandler = new WebHandler("mainpack", 5578, "/web/bigrat_beta.zip", this);
         serverResourceHandler = new ServerResourceHandler(this);
 
@@ -67,13 +69,27 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        applyresources(player);
 
         if (player.getScoreboardTags().contains("bp_alive")) {
             hideAllPlayers(player);
         }
-        player.removeScoreboardTag("br_muted");
-        applyresources(player);
+
+        ArrayList<String> downResourses = new ArrayList<>();
+        for (WebHandler resourceServer : serverResourceHandler.server_list) {
+            if (!resourceServer.online) {
+                downResourses.add(resourceServer.packname);
+            }
+        }
         //player.sendMessage(ChatColor.AQUA + "Resource pack service is currently unreliable. Working on fixing it.");
+        if (downResourses.size() > 0) {
+            player.sendMessage(ChatColor.AQUA + "Resource pack service is currently unavailable for:");
+            for (String packname : downResourses) {
+                player.sendMessage(ChatColor.AQUA + packname);
+            }
+        }
+
+        player.removeScoreboardTag("br_muted");
         player.setPlayerListHeader("\n\n\n\n\n\n\n\n\n\n\n\uE009");
     }
 
@@ -150,6 +166,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         // ---- general commands ----
         /** custom whitelist implementation */
         if(cmd.getName().equalsIgnoreCase("whitelist")) {
+            // there is no security issue because CosmelonPlugin.whitelist
             whitelist.whitelistcmd(sender, cmd, label, args);
             return true;
         }

@@ -15,6 +15,7 @@ public class PlayerChatListener implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
+
     /**
      * Mute players with 'br_muted' tag
      */

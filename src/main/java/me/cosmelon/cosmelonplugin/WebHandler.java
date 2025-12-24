@@ -18,6 +18,7 @@ public class WebHandler {
     String ip;
     int port;
     String packlocation;
+    public boolean online;
 
     /**
      * constructor
@@ -46,9 +47,10 @@ public class WebHandler {
             httpServer.requestHandler(httpServerRequest -> httpServerRequest.response().sendFile(getFileLocation()));
             httpServer.listen(port);
             log.info(this.packname + " is now live at http://" + this.ip + ":" + this.port);
+            this.online = true;
         } catch (Exception e) {
             log.warning("Unable to bind to port for '" + packname + "', select a different port!");
-            e.printStackTrace();
+            this.online = false;
             return false;
         }
         return true;
@@ -57,6 +59,7 @@ public class WebHandler {
     public void stop() {
         if (httpServer != null) {
             httpServer.close();
+            this.online = false;
         }
     }
 

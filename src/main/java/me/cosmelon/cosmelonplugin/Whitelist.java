@@ -1,11 +1,8 @@
 package me.cosmelon.cosmelonplugin;
 
 import com.google.gson.Gson;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -17,20 +14,33 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 
 public class Whitelist implements Listener {
     private CosmelonPlugin plugin;
+    private FileConfiguration config_file;
+    private boolean enforce_whitelist;
     Whitelist(CosmelonPlugin plugin) {
         this.plugin = plugin;
+        this.config_file = plugin.manager.getConfig();
+        this.enforce_whitelist = config_file.getBoolean("whitelist.enforce");
         Bukkit.getPluginManager().registerEvents(this, plugin);
         configure();
     }
 
+    final String invalid_args_msg = ChatColor.RED + "Invalid arguments!";
     void whitelistcmd(CommandSender sender, Command cmd, String label, String[] args) {
-        if (lists.contains(args[0])) {
+        final int num_args = args.length;
+        if (num_args == 0) {
+            sender.sendMessage(invalid_args_msg);
+            return;
+        }
+
+        if (lists.contains(args[0]) && (num_args == 2)) {
             switch (args[1]) {
             case "add":
                 // add the list
@@ -43,28 +53,44 @@ public class Whitelist implements Listener {
             case "list":
                 // list player names on specified list
             default:
-                sender.sendMessage("Invalid arguments!");
+                sender.sendMessage(invalid_args_msg);
                 break;
             }
-        } else if (args[0].equalsIgnoreCase("list")) {
+        } else if (args[0].equalsIgnoreCase("list") && num_args == 1) {
             StringBuilder temp = new StringBuilder();
-            temp.append(active_lists.size() + " groups active: ");
+            temp.append(active_lists.size() + " group(s) active: ");
             for (int i = 0; i < active_lists.size(); i++) {
                 temp.append(active_lists.get(i) + ", ");
             }
             sender.sendMessage(temp.toString());
 
             temp.delete(0,temp.length());
-            temp.append(lists.size() + " groups available: ");
+            temp.append(lists.size() + " group(s) available: ");
             for (int i = 0; i < lists.size(); i++) {
                 temp.append(lists.get(i) + ", ");
             }
             sender.sendMessage(temp.toString());
 
-        } else if (args[0].equalsIgnoreCase("tempplayer")) {
+        } else if (args[0].equalsIgnoreCase("tempplayer") && num_args == 2) {
             // usage: /whitelist tempplayer <name>
             //add_temp(args[1]);
-            sender.sendMessage(ChatColor.AQUA + "This feature is currently WIP. Use /whitelist off for now and turn it back on when done.");
+            if (args[1].equalsIgnoreCase("-list")) {
+                String s = "";
+                for (String name : temp_player_names) {
+                    s += name + ", ";
+                }
+                sender.sendMessage("Temp players: "_+ s);
+                return;
+            }
+
+//            sender.sendMessage(ChatColor.AQUA + "This feature is currently WIP. Use /whitelist off for now and turn it back on when done.");
+            if (temp_player_names.contains(args[1])) {
+                sender.sendMessage(args[1] + " removed from temp whitelist.");
+                temp_player_names.remove(args[1]);
+                return;
+            }
+            temp_player_names.add(args[1]);
+            sender.sendMessage(args[1] + " added to temp whitelist.");
 
         } else if (args[0].equals("on")) {
             // enforce the whitelist
@@ -121,7 +147,7 @@ public class Whitelist implements Listener {
         }
 
         active_lists.remove(list);
-        Bukkit.getLogger().info(list + "UUID list removed.");
+        Bukkit.getLogger().info(list + " UUID list removed.");
         return ChatColor.RED + list + " removed!";
     }
 
@@ -129,47 +155,49 @@ public class Whitelist implements Listener {
      * This player won't be able to log back in after the server restarts
      * @param temp_player
      */
+    /**
+     * This player won't be able to log back in after the server restarts
+     * @param temp_player
+     */
     ArrayList<PlayerID> temp_players = new ArrayList<>();
-    private void add_temp(String temp_player_name) {
+    ArrayList<String> temp_player_names = new ArrayList<>();
+    private String add_temp(String temp_player_name) {
         try {
             // Create the connection
             HttpURLConnection connection = (HttpURLConnection) new URL("https://api.mojang.com/users/profiles/minecraft/" + temp_player_name).openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Accept", "application/json");
 
-            // Read the response
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                String jsonResponse = br.lines().reduce("", String::concat);
-                Bukkit.getLogger().warning("jsonresponse from API: " + jsonResponse);
-                // Parse JSON
-                PlayerID data = new Gson().fromJson(jsonResponse, PlayerID.class);
+            if (connection.getResponseCode() != 200) return "API Error: Player does not exist.";
+
+            try (Reader reader = new InputStreamReader(connection.getInputStream())) {
+                PlayerID data = new Gson().fromJson(reader, PlayerID.class);
                 temp_players.add(data);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return ChatColor.GREEN + "Added " + temp_player_name + " to temp whitelist.";
     }
+
 
     /**
      * Listen for login attempt and dispatch UUID checks
      * @param event
      */
-    boolean enforce_whitelist;
     @EventHandler
     public void on_login(PlayerLoginEvent event) {
         if (!enforce_whitelist) {
             return;
         }
 
-        UUID uuid = event.getPlayer().getUniqueId();
-        Bukkit.getConsoleSender().sendMessage("Debugging player ID upon pre_login: " + uuid);
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
 
-        // check the temp list first
-        for (PlayerID check_temp : temp_players) {
-            if(check_temp.getId() == uuid) {
-                Bukkit.getLogger().info("Player " + check_temp.getName() + " exists on temp list... accepting.");
-                return;
-            }
+        if (temp_player_names.contains(player.getName())) {
+            Bukkit.getLogger().info(player.getName() + " is tempplayer.");
+            return;
         }
 
         // check the rest of the lists
@@ -192,28 +220,27 @@ public class Whitelist implements Listener {
         event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "Bigrat couldn't find you on the whitelist!\n\n\nContact an admin if you believe this to be an error!");
     }
 
-    String[] fuck_this_shit = {"admin","alpha_tester","tester","player","temp","friends"};
-    List<String> lists = Arrays.asList(fuck_this_shit);
+    String[] base = {"admin"};
+    List<String> lists = Arrays.asList(base);
     ArrayList<String> active_lists = new ArrayList<>();
     private void configure() {
-        enforce_whitelist = true;
+
         for (String group : lists) {
             File group_file = new File(this.plugin.getDataFolder(), group + ".txt");
-            if (group.equals("temp")) {
-                if (group_file.delete()) Bukkit.getLogger().info("Deleted temp whitelist.");
-            }
+//            if (group.equals("temp")) {
+//                if (group_file.delete()) Bukkit.getLogger().info("Deleted temp whitelist.");
+//            }
             try {
                 if(group_file.createNewFile()) Bukkit.getLogger().info("Created new whitelist file: " + group_file.getName());
             } catch (IOException e) {
                 Bukkit.getLogger().info("IOException: Failed to create new whitelist group file for group " + group_file.getName());
             }
         }
-        add_list("admin");
-        add_list("temp");
+        active_lists.clear();
+        active_lists.addAll(config_file.getStringList("whitelist.groups"));
 
-        Bukkit.getLogger().info("active lists:");
-        for (String name : active_lists) {
-            Bukkit.getLogger().info(name);
-        }
-    }
-}
+        // the admin list is always added
+        active_lists.add("admin");
+
+        Bukkit.getLogger().info("active lists: " + String.join(", ", active_lists));
+    }}
