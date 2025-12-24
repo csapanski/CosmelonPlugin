@@ -79,7 +79,7 @@ public class Whitelist implements Listener {
                 for (String name : temp_player_names) {
                     s += name + ", ";
                 }
-                sender.sendMessage("Temp players: "_+ s);
+                sender.sendMessage("Temp players: " + s);
                 return;
             }
 

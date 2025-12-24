@@ -1,6 +1,9 @@
 # assumes parent folder is in this directory
-whitelist: #true/false
-  groups: #list groups, separated by a single space
+whitelist:
+  enforce: true
+  groups:
+    - #group1
+    - #group2
 pack-list:
   # default pack must be named mainpack
   mainpack:
