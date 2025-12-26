@@ -18,6 +18,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
 public class Whitelist implements Listener {
@@ -249,16 +250,16 @@ public class Whitelist implements Listener {
      * @param event
      */
     @EventHandler
-    public void on_login(PlayerLoginEvent event) {
+    public void on_login(AsyncPlayerPreLoginEvent event) {
         if (!enforce_whitelist) {
             return;
         }
 
-        Player player = event.getPlayer();
-        UUID uuid = player.getUniqueId();
+        final String playerName = event.getName();
+        UUID uuid = event.getUniqueId();
 
-        if (temp_player_names.contains(player.getName().toLowerCase())) {
-            Bukkit.getLogger().info(player.getName() + " is tempplayer.");
+        if (temp_player_names.contains(playerName.toLowerCase())) {
+            Bukkit.getLogger().info(playerName + " is tempplayer.");
             return;
         }
 
@@ -274,12 +275,12 @@ public class Whitelist implements Listener {
                     }
                 }
             } catch (FileNotFoundException e) {
-                event.disallow(PlayerLoginEvent.Result.KICK_OTHER, "java.io.FileNotFoundException@Whitelist.java: This is a bug!\n\n\nReport it to get a personal high five from heavy_fortress2.");
-                Bukkit.getLogger().warning("Player " + event.getPlayer().getName() + " was kicked due to a FileNotFoundException");
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "java.io.FileNotFoundException@Whitelist.java: This is a bug!\n\n\nReport it to get a personal high five from heavy_fortress2.");
+                Bukkit.getLogger().warning("Player " + playerName + " was kicked due to a FileNotFoundException");
                 return;
             }
         }
-        event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "Bigrat couldn't find you on the whitelist!\n\n\nContact an admin if you believe this to be an error!");
+        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, "Bigrat couldn't find you on the whitelist!\n\n\nContact an admin if you believe this to be an error!");
     }
 
     List<String> lists = new ArrayList<>();

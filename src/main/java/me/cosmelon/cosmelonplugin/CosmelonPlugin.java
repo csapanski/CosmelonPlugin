@@ -4,6 +4,7 @@ package me.cosmelon.cosmelonplugin;
 import java.util.ArrayList;
 import java.util.UUID;
 import mc.obliviate.inventory.InventoryAPI;
+import me.cosmelon.cosmelonplugin.commands.Nickname;
 import me.cosmelon.cosmelonplugin.listeners.CompassClickListener;
 import me.cosmelon.cosmelonplugin.listeners.EntityDamageByEntityEventListener;
 import me.cosmelon.cosmelonplugin.listeners.OnInteractAtEntity;
@@ -25,7 +26,7 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 public final class CosmelonPlugin extends JavaPlugin implements Listener {
-    DataManager manager;
+    public DataManager manager;
     ServerResourceHandler serverResourceHandler;
     Whitelist whitelist;
 
@@ -46,12 +47,15 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
 
         manager = new DataManager(this);
         whitelist = new Whitelist(this);
-        //webHandler = new WebHandler("mainpack", 5578, "/web/bigrat_beta.zip", this);
         serverResourceHandler = new ServerResourceHandler(this);
 
 
         // remove collisionRule_?? team
         collidefix();
+
+//        Nickname nicknameCommand = new Nickname(this);
+        getCommand("nick").setExecutor(new Nickname(this));
+//        getServer().getPluginManager().registerEvents(nicknameCommand, this);
     }
 
     @Override
@@ -265,6 +269,8 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
             }
         }
     }
+
+
 
     @EventHandler
     public void CraftItemEvent(CraftItemEvent event) {
