@@ -6,11 +6,7 @@ import java.util.UUID;
 import mc.obliviate.inventory.InventoryAPI;
 import me.cosmelon.cosmelonplugin.commands.Memory;
 import me.cosmelon.cosmelonplugin.commands.Nickname;
-import me.cosmelon.cosmelonplugin.listeners.CompassClickListener;
-import me.cosmelon.cosmelonplugin.listeners.EntityDamageByEntityEventListener;
-import me.cosmelon.cosmelonplugin.listeners.OnInteractAtEntity;
-import me.cosmelon.cosmelonplugin.listeners.PlayerChatListener;
-import me.cosmelon.cosmelonplugin.listeners.ResourceDenyListener;
+import me.cosmelon.cosmelonplugin.listeners.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -18,7 +14,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -37,29 +32,11 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         // Plugin startup logic
         Bukkit.getConsoleSender().sendMessage("CosmelonPlugin Enabled!");
         getServer().getPluginManager().registerEvents(this, this);
-        new ResourceDenyListener(this);
-        new CompassClickListener(this);
-        new EntityDamageByEntityEventListener(this);
-        new PlayerChatListener(this);
-        new OnInteractAtEntity(this);
-
-        startPlayerCountTask();
-        new InventoryAPI(this).init();
-
-        manager = new DataManager(this);
-        whitelist = new Whitelist(this);
-        serverResourceHandler = new ServerResourceHandler(this);
-
-        bigrat = getConfig().getBoolean("bigrat");
-
-        if (bigrat) startTagCheckTask();
+        init();
 
         // remove collisionRule_?? team
         collidefix();
 
-        getCommand("nick").setExecutor(new Nickname(this));
-        getCommand("memory").setExecutor(new Memory(this));
-//        getServer().getPluginManager().registerEvents(nicknameCommand, this);
     }
 
     @Override
@@ -67,6 +44,33 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         // Plugin shutdown logic
         Bukkit.getConsoleSender().sendMessage("CosmelonPlugin Disabled");
         serverResourceHandler.stop();
+    }
+
+    public void init() {
+        new ResourceDenyListener(this);
+        new CompassClickListener(this);
+        new EntityDamageByEntityEventListener(this);
+        new PlayerChatListener(this);
+        new OnInteractAtEntity(this);
+        new CraftItemListener(this);
+        new InventoryAPI(this).init();
+
+        manager = new DataManager(this);
+        whitelist = new Whitelist(this);
+        serverResourceHandler = new ServerResourceHandler(this);
+
+        // get if on bigrat server
+        bigrat = getConfig().getBoolean("bigrat");
+
+        if (bigrat) startTagCheckTask();
+        startPlayerCountTask();
+
+        // /nick command
+        Nickname nickManager = new Nickname(this);
+        getCommand("nick").setExecutor(nickManager);
+        getServer().getPluginManager().registerEvents(nickManager, this);
+
+        getCommand("memory").setExecutor(new Memory(this));
     }
 
     /**
@@ -280,11 +284,6 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
 
 
 
-    @EventHandler
-    public void CraftItemEvent(CraftItemEvent event) {
-        if (event.getWhoClicked().getScoreboardTags().contains("br_disablecrafting")) {
-            event.setCancelled(true);
-        }
-    }
+
 
 }

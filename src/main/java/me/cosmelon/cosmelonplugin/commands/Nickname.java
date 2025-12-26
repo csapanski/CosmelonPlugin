@@ -3,27 +3,28 @@ package me.cosmelon.cosmelonplugin.commands;
 import me.cosmelon.cosmelonplugin.CosmelonPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * Set a nickname for the specified player.
  * /nick <target> <name>
  * /nick <target> -reset
  */
-public class Nickname implements CommandExecutor {
+public class Nickname implements CommandExecutor, Listener {
 
-    final private CosmelonPlugin plugin;
-    private FileConfiguration config_file;
+    private final CosmelonPlugin plugin;
+    private final Map<UUID, String> nicknames = new HashMap<>();
+
     public Nickname(CosmelonPlugin plugin) {
         this.plugin = plugin;
-        this.config_file = plugin.getConfig();
-
     }
 
     @Override
@@ -34,17 +35,34 @@ public class Nickname implements CommandExecutor {
         if (target == null) return false;
 
         String nick = "";
-        if (args.length == 3 && args[2] == "-reset") {
+        if (args.length == 3 && args[2].equalsIgnoreCase("-reset")) {
             nick = target.getName();
+            nicknames.remove(target.getUniqueId());
         } else {
             nick = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+            nicknames.put(target.getUniqueId(), nick);
         }
 
-        target.setDisplayName(nick);
-        target.setPlayerListName(nick);
+        applyNick(target, nick);
 
-        target.sendMessage(ChatColor.GOLD + "Your name is now set to " + nick + ".");
+        Bukkit.broadcastMessage(ChatColor.GOLD + "» " + target.getName() + " is now " + nick + ".");
+        sender.sendMessage(ChatColor.GOLD + "» " + target.getName() + " is now " + nick + ".");
+        Bukkit.getLogger().info( sender.getName() + " nicked " + target.getName() + " as " + nick + ".");
         return true;
     }
 
+    public void applyNick(Player player, String nick) {
+        // Chat and tab
+        player.setDisplayName(nick);
+        player.setPlayerListName(nick);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player p = event.getPlayer();
+        String nick = nicknames.get(p.getUniqueId());
+        if (nick != null) {
+            applyNick(p, nick);
+        }
+    }
 }

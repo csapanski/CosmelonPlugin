@@ -23,6 +23,8 @@ public class PlayerChatListener implements Listener {
     public void onAsyncPlayerChat(AsyncPlayerChatEvent e) {
         Player player = e.getPlayer();
 
+        e.setFormat(player.getDisplayName() + ChatColor.RESET + ": " + ChatColor.WHITE + "%2$s");
+
         if (player.getScoreboardTags().contains("br_muted")) {
             if (player.isOp()) {
                 return;
