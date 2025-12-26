@@ -4,6 +4,7 @@ package me.cosmelon.cosmelonplugin;
 import java.util.ArrayList;
 import java.util.UUID;
 import mc.obliviate.inventory.InventoryAPI;
+import me.cosmelon.cosmelonplugin.commands.Memory;
 import me.cosmelon.cosmelonplugin.commands.Nickname;
 import me.cosmelon.cosmelonplugin.listeners.CompassClickListener;
 import me.cosmelon.cosmelonplugin.listeners.EntityDamageByEntityEventListener;
@@ -55,6 +56,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
 
 //        Nickname nicknameCommand = new Nickname(this);
         getCommand("nick").setExecutor(new Nickname(this));
+        getCommand("memory").setExecutor(new Memory(this));
 //        getServer().getPluginManager().registerEvents(nicknameCommand, this);
     }
 
@@ -172,13 +174,6 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         if(cmd.getName().equalsIgnoreCase("whitelist")) {
             // there is no security issue because CosmelonPlugin.whitelist
             whitelist.whitelistcmd(sender, cmd, label, args);
-            return true;
-        }
-        /** memusage */
-        if(cmd.getName().equalsIgnoreCase("memusage")) {
-            Runtime r = Runtime.getRuntime();
-            long memused = (r.maxMemory() - r.freeMemory()) / 1048576;
-            sender.sendMessage("Memory Usage: " + memused + "/" + r.maxMemory() / 1048576 + "MB");
             return true;
         }
 

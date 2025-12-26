@@ -20,8 +20,8 @@ commands:
     description: UUID whitelist
     usage: /whitelist
     permission: CosmelonPlugin.whitelist
-  memusage:
-    description: Check server RAM usage
+  memory:
+    description: Server RAM info.
     usage: /memusage
     permission: CosmelonPlugin.memusage
   fixmusic:
