@@ -15,17 +15,17 @@ public class Memory implements CommandExecutor {
 
 
     @Override
-    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
-        int num_args = strings.length;
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        int num_args = args.length;
         if (num_args != 1) {
             return false;
         }
 
         /** memory -usage */
-        if (strings[0] == "-usage") {
+        if (args[0].equalsIgnoreCase("-usage")) {
             Runtime r = Runtime.getRuntime();
             long memused = (r.maxMemory() - r.freeMemory()) / 1048576;
-            commandSender.sendMessage("Memory Usage: " + memused + "/" + r.maxMemory() / 1048576 + "MB");
+            sender.sendMessage("Memory Usage: " + memused + "/" + r.maxMemory() / 1048576 + "MB");
         }
 
         return true;

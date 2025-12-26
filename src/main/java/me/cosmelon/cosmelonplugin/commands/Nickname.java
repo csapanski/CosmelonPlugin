@@ -11,6 +11,11 @@ import org.bukkit.command.CommandSender;
 
 import java.util.Arrays;
 
+/**
+ * Set a nickname for the specified player.
+ * /nick <target> <name>
+ * /nick <target> -reset
+ */
 public class Nickname implements CommandExecutor {
 
     final private CosmelonPlugin plugin;

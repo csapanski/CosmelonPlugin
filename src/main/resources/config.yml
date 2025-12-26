@@ -1,4 +1,5 @@
 # assumes parent folder is in this directory
+bigrat: true
 whitelist:
   enforce: true
   groups:

@@ -30,6 +30,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
     public DataManager manager;
     ServerResourceHandler serverResourceHandler;
     Whitelist whitelist;
+    public boolean bigrat;
 
     @Override
     public void onEnable() {
@@ -42,7 +43,6 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         new PlayerChatListener(this);
         new OnInteractAtEntity(this);
 
-        startTagCheckTask();
         startPlayerCountTask();
         new InventoryAPI(this).init();
 
@@ -50,11 +50,13 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         whitelist = new Whitelist(this);
         serverResourceHandler = new ServerResourceHandler(this);
 
+        bigrat = getConfig().getBoolean("bigrat");
+
+        if (bigrat) startTagCheckTask();
 
         // remove collisionRule_?? team
         collidefix();
 
-//        Nickname nicknameCommand = new Nickname(this);
         getCommand("nick").setExecutor(new Nickname(this));
         getCommand("memory").setExecutor(new Memory(this));
 //        getServer().getPluginManager().registerEvents(nicknameCommand, this);
@@ -77,7 +79,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         applyresources(player);
 
-        if (player.getScoreboardTags().contains("bp_alive")) {
+        if (player.getScoreboardTags().contains("bp_alive") && bigrat) {
             hideAllPlayers(player);
         }
 
@@ -96,7 +98,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         }
 
         player.removeScoreboardTag("br_muted");
-        player.setPlayerListHeader("\n\n\n\n\n\n\n\n\n\n\n\uE009");
+        if (bigrat) player.setPlayerListHeader("\n\n\n\n\n\n\n\n\n\n\n\uE009");
     }
 
     @EventHandler
@@ -133,7 +135,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
             }
             /** colorblind resource pack request */
             // /colorblind
-            if (cmd.getName().equalsIgnoreCase("colorblind")) {
+            if (cmd.getName().equalsIgnoreCase("colorblind") && bigrat) {
                 if (!player.getScoreboardTags().contains("br_colorblind")) {
                     player.addScoreboardTag("br_colorblind");
                 } else {
@@ -144,11 +146,20 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
             }
             /** load a fresh copy of the resource pack */
             if (cmd.getName().equalsIgnoreCase("reloadpack")) {
+                int num_args = args.length;
+                if (num_args == 1 && player.isOp()) {
+                    for (Player p : Bukkit.getOnlinePlayers()) {
+                        if (p.getName().equalsIgnoreCase(args[0])) {
+                            applyresources(p);
+                            return true;
+                        }
+                    }
+                }
                 applyresources(player);
                 return true;
             }
             /** readycheck **/
-            if (cmd.getName().equalsIgnoreCase("reafycheck")) {
+            if (cmd.getName().equalsIgnoreCase("reafycheck") && bigrat) {
                 int count = 0;
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     if (p.getScoreboardTags().contains("player")) {
@@ -236,17 +247,19 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
 
             @Override
             public void run() {
-
                 int count = 0;
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    if (player.getScoreboardTags().contains("player")) {
+                    if (player.getScoreboardTags().contains("player") && bigrat) {
                         count++;
                     }
                 }
+                int max_players = Bukkit.getMaxPlayers();
+                if (bigrat) max_players = 16;
 
                 for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (bigrat)
                     player.setPlayerListFooter(
-                        net.md_5.bungee.api.ChatColor.of("#1cc9bb") + "Players: " + count + "/16");
+                        net.md_5.bungee.api.ChatColor.of("#1cc9bb") + "Players: " + count + "/" + max_players);
                 }
             }
         }.runTaskTimerAsynchronously(this, 10L, 10L);
