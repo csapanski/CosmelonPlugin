@@ -10,6 +10,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import github.scarsz.discordsrv.DiscordSRV;
+import github.scarsz.discordsrv.util.DiscordUtil;
 
 import java.util.*;
 
@@ -48,8 +50,11 @@ public class Nickname implements CommandExecutor, Listener {
         Bukkit.broadcastMessage(ChatColor.GOLD + "» " + target.getName() + " is now " + nick + ".");
         sender.sendMessage(ChatColor.GOLD + "» " + target.getName() + " is now " + nick + ".");
         Bukkit.getLogger().info( sender.getName() + " nicked " + target.getName() + " as " + nick + ".");
+
+        DiscordUtil.sendMessage(DiscordSRV.getPlugin().getMainTextChannel(), "**[SERVER]** " + target.getName() + " is now " + nick);
         return true;
     }
+
 
     public void applyNick(Player player, String nick) {
         // Chat and tab

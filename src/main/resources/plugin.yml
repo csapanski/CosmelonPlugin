@@ -3,6 +3,8 @@ version: '1.0'
 date:
 main: me.cosmelon.cosmelonplugin.CosmelonPlugin
 api-version: '1.20'
+softdepend:
+  - DiscordSRV
 commands:
   playerhide:
     description: Hides players
@@ -35,3 +37,4 @@ commands:
     description: Set a player nickname
     usage: /nick
     permission: CosmelonPlugin.nick
+
