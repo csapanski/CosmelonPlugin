@@ -1,12 +1,8 @@
 package me.cosmelon.cosmelonplugin;
 
-import com.google.gson.Gson;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
@@ -15,11 +11,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 
 public class Whitelist implements Listener {
     private CosmelonPlugin plugin;
@@ -294,18 +288,28 @@ public class Whitelist implements Listener {
 
         for (String group : lists) {
             File group_file = new File(this.plugin.getDataFolder(), group + ".txt");
-//            if (group.equals("temp")) {
-//                if (group_file.delete()) Bukkit.getLogger().info("Deleted temp whitelist.");
-//            }
             try {
                 if(group_file.createNewFile()) Bukkit.getLogger().info("Created new whitelist file: " + group_file.getName());
             } catch (IOException e) {
                 Bukkit.getLogger().info("IOException: Failed to create new whitelist group file for group " + group_file.getName());
             }
         }
+
         active_lists.clear();
+
+        // add lists that are specified in config.yml
+        List<String> configActive = config_file.getStringList("whitelist.active");
+        for (String group : configActive) {
+            if (lists.contains(group)) {
+                active_lists.add(group);
+            } else {
+                Bukkit.getLogger().warning("Group '" + group + "' in whitelist.active does not exist in whitelist.groups!");
+            }
+        }
         // the admin list is always added
-        active_lists.add("admin");
+        if (!active_lists.contains("admin")) {
+            active_lists.add("admin");
+        }
 
         Bukkit.getLogger().info("active lists: " + String.join(", ", active_lists));
     }}

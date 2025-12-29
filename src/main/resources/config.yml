@@ -5,6 +5,8 @@ whitelist:
   groups:
     - #group1
     - #group2
+  active:
+    - #group1
 pack-list:
   # default pack must be named mainpack
   mainpack:

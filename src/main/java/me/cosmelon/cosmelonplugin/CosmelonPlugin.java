@@ -3,6 +3,9 @@ package me.cosmelon.cosmelonplugin;
 
 import java.util.ArrayList;
 import java.util.UUID;
+
+import github.scarsz.discordsrv.DiscordSRV;
+import github.scarsz.discordsrv.util.DiscordUtil;
 import mc.obliviate.inventory.InventoryAPI;
 import me.cosmelon.cosmelonplugin.commands.Memory;
 import me.cosmelon.cosmelonplugin.commands.Nickname;
@@ -71,6 +74,9 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(nickManager, this);
 
         getCommand("memory").setExecutor(new Memory(this));
+
+        // kick listener
+        new PlayerKickListener(this);
     }
 
     /**
@@ -195,6 +201,21 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         return false;
    }
 
+
+   /**
+    * Send a message in both game chat and discord
+    */
+   public static void send_global(String msg) {
+       send_global(msg, ChatColor.WHITE);
+   }
+
+    public static void send_global(String msg, ChatColor color) {
+        DiscordUtil.sendMessage(DiscordSRV.getPlugin().getMainTextChannel(), "**[SERVER]** " + msg) ;
+        Bukkit.broadcastMessage(color + "» " + msg);
+    }
+
+
+
     // ------- PRIVATE METHODS -------
     private void startTagCheckTask() {
         new BukkitRunnable() {
@@ -253,7 +274,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
             public void run() {
                 int count = 0;
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    if (player.getScoreboardTags().contains("player") && bigrat) {
+                    if (!bigrat || player.getScoreboardTags().contains("player")) {
                         count++;
                     }
                 }
@@ -261,7 +282,6 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
                 if (bigrat) max_players = 16;
 
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    if (bigrat)
                     player.setPlayerListFooter(
                         net.md_5.bungee.api.ChatColor.of("#1cc9bb") + "Players: " + count + "/" + max_players);
                 }

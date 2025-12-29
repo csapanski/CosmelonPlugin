@@ -51,7 +51,7 @@ public class Nickname implements CommandExecutor, Listener {
         sender.sendMessage(ChatColor.GOLD + "» " + target.getName() + " is now " + nick + ".");
         Bukkit.getLogger().info( sender.getName() + " nicked " + target.getName() + " as " + nick + ".");
 
-        DiscordUtil.sendMessage(DiscordSRV.getPlugin().getMainTextChannel(), "**[SERVER]** " + target.getName() + " is now " + nick);
+        CosmelonPlugin.send_global(target.getName() + " is now " + nick, ChatColor.GOLD);
         return true;
     }
 
