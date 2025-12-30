@@ -15,3 +15,9 @@ pack-list:
   additionalpack:
     port:
     location: #/web/__.zip
+  pastel-day:
+    port:
+    location: #/web/__.zip
+#events
+sins: false
+pastel-day: false

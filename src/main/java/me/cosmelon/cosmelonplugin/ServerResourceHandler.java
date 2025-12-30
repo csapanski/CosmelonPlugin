@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import me.cosmelon.cosmelonplugin.misc.PastelDay;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 
 /**
  * This class handles parse/loading config data and http ports for the resource pack host
@@ -14,12 +17,16 @@ public class ServerResourceHandler {
 
     private FileConfiguration config_file;
     private CosmelonPlugin plugin;
+
+    private PastelDay pd;
     ServerResourceHandler(CosmelonPlugin plugin) {
         this.plugin = plugin;
         this.config_file = plugin.manager.getConfig();
 
         loadFromConfig();
         start(resourcePacks);
+
+        this.pd = new PastelDay(plugin);
     }
 
     /**
@@ -92,6 +99,24 @@ public class ServerResourceHandler {
             }
         }
         return null;
+    }
+
+    // send the proper resource pack to a player
+    protected void applyresources(Player player) {
+        player.removeResourcePacks();
+
+        // pastel pack
+        if (!plugin.bigratStatus() && pd.getPastelStatus()) {
+            player.addResourcePack(UUID.randomUUID(), getUrl("pastel-day"), null, "Installing Billy day pack...", true);
+        }
+
+        // mainpack
+        player.addResourcePack(UUID.randomUUID(), getUrl("mainpack"), null, "Installing mainpack", true);
+
+        // accessibility extensions
+        if (player.getScoreboardTags().contains("br_colorblind")) {
+            player.addResourcePack(UUID.randomUUID(), getUrl("colorblind"), null, "Install accessibility pack?", true);
+        }
     }
 
 }

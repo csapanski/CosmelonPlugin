@@ -35,6 +35,8 @@ commands:
     permission: CosmelonPlugin.memusage
   nick:
     description: Set a player nickname
-    usage: /nick
+    usage: /nick <player> <nickname>
     permission: CosmelonPlugin.nick
-
+  sin:
+    description: Set another player's sin.
+    usage: /sin <sin> <player>
