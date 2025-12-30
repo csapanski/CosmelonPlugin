@@ -9,6 +9,7 @@ import github.scarsz.discordsrv.util.DiscordUtil;
 import mc.obliviate.inventory.InventoryAPI;
 import me.cosmelon.cosmelonplugin.commands.Memory;
 import me.cosmelon.cosmelonplugin.commands.Nickname;
+import me.cosmelon.cosmelonplugin.commands.Sin;
 import me.cosmelon.cosmelonplugin.listeners.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -55,7 +56,6 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         new EntityDamageByEntityEventListener(this);
         new PlayerChatListener(this);
         new OnInteractAtEntity(this);
-        new CraftItemListener(this);
         new InventoryAPI(this).init();
 
         manager = new DataManager(this);
@@ -76,7 +76,12 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         getCommand("memory").setExecutor(new Memory(this));
 
         // kick listener
-        new PlayerKickListener(this);
+        PlayerKickListener kickListener = new PlayerKickListener(this);
+        getServer().getPluginManager().registerEvents(kickListener, this);
+
+        // sinning!
+        Sin sin = new Sin(this);
+        getCommand("sin").setExecutor(sin);
     }
 
     /**
@@ -87,7 +92,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        applyresources(player);
+        serverResourceHandler.applyresources(player);
 
         if (player.getScoreboardTags().contains("bp_alive") && bigrat) {
             hideAllPlayers(player);
@@ -151,7 +156,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
                 } else {
                     player.removeScoreboardTag("br_colorblind");
                 }
-                applyresources(player);
+                serverResourceHandler.applyresources(player);
                 return true;
             }
             /** load a fresh copy of the resource pack */
@@ -160,12 +165,12 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
                 if (num_args == 1 && player.isOp()) {
                     for (Player p : Bukkit.getOnlinePlayers()) {
                         if (p.getName().equalsIgnoreCase(args[0])) {
-                            applyresources(p);
+                            serverResourceHandler.applyresources(p);
                             return true;
                         }
                     }
                 }
-                applyresources(player);
+                serverResourceHandler.applyresources(player);
                 return true;
             }
             /** readycheck **/
@@ -205,16 +210,14 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
    /**
     * Send a message in both game chat and discord
     */
-   public static void send_global(String msg) {
+    public void send_global(String msg) {
        send_global(msg, ChatColor.WHITE);
    }
 
-    public static void send_global(String msg, ChatColor color) {
+    public void send_global(String msg, ChatColor color) {
         DiscordUtil.sendMessage(DiscordSRV.getPlugin().getMainTextChannel(), "**[SERVER]** " + msg) ;
         Bukkit.broadcastMessage(color + "» " + msg);
     }
-
-
 
     // ------- PRIVATE METHODS -------
     private void startTagCheckTask() {
@@ -254,18 +257,7 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 20L, 20L);
     }
 
-    // send the proper resource pack to a player
-    private void applyresources(Player player) {
-        if (player.getScoreboardTags().contains("br_colorblind")) {
 
-            //player.addResourcePack(UUID ,serverResourceHandler.getUrl("colorblind"));
-            player.addResourcePack(UUID.randomUUID(), serverResourceHandler.getUrl("colorblind"), null, "Install accessibility pack?", true);
-        } else {
-            player.removeResourcePacks();
-            player.setResourcePack(serverResourceHandler.getUrl("mainpack"));
-        }
-
-    }
 
     private void startPlayerCountTask() {
         new BukkitRunnable() {
@@ -300,6 +292,10 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
                 Bukkit.getConsoleSender().sendMessage(teamName + " removed. This is a hack fix --Cosmelon.");
             }
         }
+    }
+
+    protected boolean bigratStatus() {
+        return this.bigrat;
     }
 
 

@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -23,19 +24,21 @@ public class PlayerKickListener implements Listener {
     }
 
     @EventHandler
-    public void on_command(PlayerCommandPreprocessEvent event) {
-        String msg = event.getMessage().toLowerCase();
+    public void on_command(ServerCommandEvent event) {
+        // kick from the console
+        String msg = event.getCommand();
+        command(msg);
+    }
 
+    @EventHandler
+    public void on_command(PlayerCommandPreprocessEvent event) {
+        // kick from a player
+        String msg = event.getMessage();
         if (msg.startsWith("/kick ")) {
-            String[] args = msg.split(" ");
-            if (2 <= args.length) {
-                Player target = Bukkit.getPlayer(args[1]);
-                if (target != null) {
-                    manually_kicked.add(target.getUniqueId());
-                }
-            }
+            command(msg.substring(1));
         }
     }
+
 
     private Set<UUID> manually_kicked = new HashSet<>();
     @EventHandler
@@ -44,12 +47,29 @@ public class PlayerKickListener implements Listener {
         String reason = event.getReason();
 
         // make sure this isn't sent when autokick or when bigrat is on
-        if (!manually_kicked.contains(p) || plugin.bigrat) return;
+        if (!manually_kicked.contains(p.getUniqueId()) || plugin.bigrat) return;
 
-        if (!reason.equals("")) {
+        manually_kicked.remove(p.getUniqueId());
+
+        // determine the message and send it
+        if (!reason.isEmpty()) {
             plugin.send_global(p.getName() + " was kicked for: " + reason, ChatColor.RED);
         } else {
-            plugin.send_global(p.getName() + " was kicked from the server.");
+            plugin.send_global("Kicked " + p.getName(), ChatColor.RED);
+        }
+    }
+
+
+    // general command handler for the trigger
+    private void command(String msg) {
+        if (msg.startsWith("kick ")) {
+            String[] args = msg.split(" ");
+            if (2 <= args.length) {
+                Player target = Bukkit.getPlayer(args[1]);
+                if (target != null) {
+                    manually_kicked.add(target.getUniqueId());
+                }
+            }
         }
     }
 }

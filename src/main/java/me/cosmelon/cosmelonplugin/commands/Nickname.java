@@ -47,11 +47,8 @@ public class Nickname implements CommandExecutor, Listener {
 
         applyNick(target, nick);
 
-        Bukkit.broadcastMessage(ChatColor.GOLD + "» " + target.getName() + " is now " + nick + ".");
-        sender.sendMessage(ChatColor.GOLD + "» " + target.getName() + " is now " + nick + ".");
         Bukkit.getLogger().info( sender.getName() + " nicked " + target.getName() + " as " + nick + ".");
-
-        CosmelonPlugin.send_global(target.getName() + " is now " + nick, ChatColor.GOLD);
+        plugin.send_global(target.getName() + " is now " + nick, ChatColor.GOLD);
         return true;
     }
 
