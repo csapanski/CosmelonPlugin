@@ -26,7 +26,28 @@ public class ServerResourceHandler {
         loadFromConfig();
         start(resourcePacks);
 
-        this.pd = new PastelDay(plugin);
+        this.pd = new PastelDay(this, plugin);
+    }
+
+    /**
+     * Send the proper resource pack to a player.
+      * @param player
+     */
+    public void applyresources(Player player) {
+        player.removeResourcePacks();
+
+        // pastel pack
+        if (!plugin.bigratStatus() && pd.getPastelStatus()) {
+            player.addResourcePack(UUID.randomUUID(), getUrl("pastel-day"), null, "Installing Billy day pack...", true);
+        }
+
+        // mainpack
+        player.addResourcePack(UUID.randomUUID(), getUrl("mainpack"), null, "Installing mainpack", true);
+
+        // accessibility extensions
+        if (player.getScoreboardTags().contains("br_colorblind")) {
+            player.addResourcePack(UUID.randomUUID(), getUrl("colorblind"), null, "Install accessibility pack?", true);
+        }
     }
 
     /**
@@ -36,21 +57,18 @@ public class ServerResourceHandler {
     private ArrayList<ServerResourcePack> resourcePacks;
     // load from config
     private void loadFromConfig() {
+        // grab packs from config
         resourcePacks = new ArrayList<>();
-//        ip = config_file.getString("server-ip");
-        ArrayList<String> packs_literal = new ArrayList<>(config_file.getConfigurationSection("pack-list").getKeys(false));
+        ArrayList<String> pack_names = new ArrayList<>(config_file.getConfigurationSection("pack-list").getKeys(false));
+        Bukkit.getConsoleSender().sendMessage(pack_names.size() + " pack(s) loading from config:");
 
-        Bukkit.getConsoleSender().sendMessage(packs_literal.size() + " pack(s) loading from config:");
-
-        for (String pack_name : packs_literal) {
-
+        for (String pack_name : pack_names) {
             // create pack object
             ServerResourcePack pack = new ServerResourcePack(pack_name,
                 config_file.getInt("pack-list." + pack_name + ".port"),
                 config_file.getString("pack-list." + pack_name + ".location"));
 
             resourcePacks.add(pack);
-
             Bukkit.getConsoleSender().sendMessage(pack.toString());
         }
 
@@ -74,7 +92,9 @@ public class ServerResourceHandler {
     }
 
 
-    // stop http servers
+    /**
+     * Stop all http servers
+     */
     protected void stop() {
         if (server_list != null) {
             for (WebHandler webHandler : this.server_list) {
@@ -99,24 +119,6 @@ public class ServerResourceHandler {
             }
         }
         return null;
-    }
-
-    // send the proper resource pack to a player
-    protected void applyresources(Player player) {
-        player.removeResourcePacks();
-
-        // pastel pack
-        if (!plugin.bigratStatus() && pd.getPastelStatus()) {
-            player.addResourcePack(UUID.randomUUID(), getUrl("pastel-day"), null, "Installing Billy day pack...", true);
-        }
-
-        // mainpack
-        player.addResourcePack(UUID.randomUUID(), getUrl("mainpack"), null, "Installing mainpack", true);
-
-        // accessibility extensions
-        if (player.getScoreboardTags().contains("br_colorblind")) {
-            player.addResourcePack(UUID.randomUUID(), getUrl("colorblind"), null, "Install accessibility pack?", true);
-        }
     }
 
 }

@@ -21,3 +21,6 @@ pack-list:
 #events
 sins: false
 pastel-day: false
+
+terminal-velocity-enabled: false
+terminal-velocity-speed: 40

@@ -1,26 +1,42 @@
 package me.cosmelon.cosmelonplugin.misc;
 
 import me.cosmelon.cosmelonplugin.CosmelonPlugin;
+import me.cosmelon.cosmelonplugin.ServerResourceHandler;
+import me.cosmelon.cosmelonplugin.tools.Comms;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 
 import static java.lang.Math.random;
 
-public class PastelDay implements Listener {
+public class PastelDay {
 
-    private final CosmelonPlugin plugin;
+    private final ServerResourceHandler handler;
     private final boolean pastel_day_allowed;
     private long last_time = -1;
 
-    public PastelDay(CosmelonPlugin plugin) {
-        this.plugin = plugin;
+    public PastelDay(ServerResourceHandler handler, CosmelonPlugin plugin) {
+        this.handler = handler;
         this.pastel_day_allowed = plugin.getConfig().getBoolean("pastel-day");
+
+        Bukkit.getLogger().warning("PastelDay constructed");
 
         Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             long time = Bukkit.getWorld("world").getTime();
 
             if (time < last_time) {
                 // new minecraft day has started
+                // remove billy day
+                if (pastel_day) {
+                    pastel_day = false;
+                    for (Player p : Bukkit.getOnlinePlayers()) {
+                        p.sendTitle(ChatColor.AQUA +"BILLY DAY OVER", "WE KILLED HIM");
+                        handler.applyresources(p);
+                    }
+                    Comms.send_global("Billy day ended!", ChatColor.AQUA);
+                }
+
+                // try for billy day
                 if (pastel_day_allowed && !pastel_day) rollForPastel();
             }
             last_time = time;
@@ -35,15 +51,22 @@ public class PastelDay implements Listener {
 
     private void rollForPastel() {
         // want at least a few players online for it
-        if (Bukkit.getOnlinePlayers().size() > 2) {
+        if (Bukkit.getOnlinePlayers().size() < 3) {
             return;
         }
 
-        if (random() < 0.05) {
-            plugin.send_global("Billy day starting now!");
+        double rand = random();
+        if (rand < 0.1) {
+            // billy event happening
             pastel_day = true;
+            Comms.send_global("Billy day starting now!");
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                p.setTitleTimes(0, 4, 1);
+                p.sendTitle(ChatColor.AQUA +"BILLY DAY!!!!!", "");
+                handler.applyresources(p);
+            }
+        } else {
+            Bukkit.getLogger().info("PastelDay rolled " + rand);
         }
     }
-
-
 }

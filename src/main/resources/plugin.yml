@@ -3,6 +3,7 @@ version: '1.0'
 date:
 main: me.cosmelon.cosmelonplugin.CosmelonPlugin
 api-version: '1.20'
+description: Server management plugin for bigrat-rework and SMP
 softdepend:
   - DiscordSRV
 commands:

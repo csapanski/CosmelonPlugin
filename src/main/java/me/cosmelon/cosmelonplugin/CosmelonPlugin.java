@@ -68,6 +68,8 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         if (bigrat) startTagCheckTask();
         startPlayerCountTask();
 
+        if (!bigrat) new ElytraListener(this);
+
         // /nick command
         Nickname nickManager = new Nickname(this);
         getCommand("nick").setExecutor(nickManager);
@@ -83,6 +85,19 @@ public final class CosmelonPlugin extends JavaPlugin implements Listener {
         Sin sin = new Sin(this);
         getCommand("sin").setExecutor(sin);
     }
+
+
+    public void reloadPlugin(CommandSender sender) {
+        Bukkit.getScheduler().cancelTasks(this);
+
+        if (serverResourceHandler != null) {
+            serverResourceHandler.stop();
+        }
+
+        manager = null;
+        whitelist = null;
+    }
+
 
     /**
      * Set conditions on join to ensure accuracy
