@@ -44,9 +44,6 @@ public class ElytraListener implements Listener {
 
         if (overspeed && gliding && enabled){
             p.setVelocity(v.normalize().multiply(maxvel_mpt));
-//            if (rateLimitMsg("TermVel",p.getName(),10000)){
-//                p.sendMessage(termvel_warn);
-//            }
         }
     }
 }

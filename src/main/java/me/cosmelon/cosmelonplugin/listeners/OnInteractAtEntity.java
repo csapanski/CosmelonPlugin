@@ -8,13 +8,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 
 public class OnInteractAtEntity implements Listener {
+
+    private final CosmelonPlugin plugin;
     public OnInteractAtEntity(CosmelonPlugin plugin) {
+        this.plugin = plugin;
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     @EventHandler
     public void OnInteractAtEntity(PlayerInteractAtEntityEvent e) {
-        if (e.getRightClicked() instanceof ArmorStand) {
+        boolean bigrat = plugin.getConfig().getBoolean("bigrat");
+        if (e.getRightClicked() instanceof ArmorStand && bigrat) {
             if (e.getPlayer().getScoreboardTags().contains("debug")) {
                 e.getPlayer().sendMessage("[Debug] Armor stand clicked. Event ignored.");
             }
