@@ -22,5 +22,7 @@ pack-list:
 sins: false
 pastel-day: false
 
-terminal-velocity-enabled: false
-terminal-velocity-speed: 40
+elyta-nerf:
+  terminal-velocity-enabled: false
+  terminal-velocity-speed: 40
+  require-gold-in-nether: false
